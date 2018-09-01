@@ -11,5 +11,5 @@ define('DB_NAME', 'amazon_review');
 define('DB_HOST', 'localhost');
 define('DB_DSN', 'mysql:host=' . DB_HOST . ';dbname=' . DB_NAME .'');
 
-define('ROOT_DIR', '/var/www/html/amzrs/scraper-amazon-reviews/');
+define('ROOT_DIR', '/var/www/html/amzrs/scraper-amazon-inorganic/');
 ?>

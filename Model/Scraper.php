@@ -68,6 +68,16 @@ class Scraper
         return $result;
     }
 
+    public function isAsinExist($asin, $date){
+        $pdo = $this->getPdo();
+        $sql = 'SELECT * FROM `inorganic` WHERE `asin` = "'.$asin.'" AND `time` LIKE "'.$date.'%"';
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute();
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+        $pdo = null;
+        return $result;
+    }
+
     public function insertAsinLink($id, $url){
         $pdo = $this->getPdo();
         $sql = 'UPDATE `asins` SET `asin_review_url` = "'.$url.'" WHERE `id` = '.$id;
@@ -77,10 +87,19 @@ class Scraper
         return true;
     }
 
-    public function addProducts($data){
+    public function addProduct($data){
+        $pdo = $this->getPdo();
+        $sql = 'INSERT INTO `inorganic` SET `position` = '.$data['position'].', `keyword` = "'.$data['keyword'].'", `brand` = "'.$data['brand'].'", `message` = "'.$data['message'].'", `asin` = "'.$data['asin'].'", `title` = "'.$data['title'].'", `locale` = "'.$data['locale'].'"';
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute();
+        $pdo = null;
+        return true;
+    }
+    public function addProducts($data, $date){
         $pdo = $this->getPdo();
         $values = '';
         for($x = 0; $x < count($data); $x++){
+
             if($x == count($data) -1 ){
                 $values .= '('.$data[$x][0].',
                 "'.$data[$x][1].'",
@@ -88,7 +107,8 @@ class Scraper
                 "'.$data[$x][3].'",
                 "'.$data[$x][4].'",
                 "'.$data[$x][5].'",
-                "'.$data[$x][6].'"
+                "'.$data[$x][6].'",
+                "'.$date.'"
                 )';
             }else{
                 $values .= '('.$data[$x][0].',
@@ -97,16 +117,27 @@ class Scraper
                 "'.$data[$x][3].'",
                 "'.$data[$x][4].'",
                 "'.$data[$x][5].'",
-                "'.$data[$x][6].'"
+                "'.$data[$x][6].'",
+                "'.$date.'"
                 ),';
             }
         }
 
+
         $sql = 'INSERT INTO `inorganic`
-                  (`position`, `keyword`, `brand`, `message`, `asin`, `title`, `locale`)
+                  (`position`, `keyword`, `brand`, `message`, `asin`, `title`, `locale`, `date_executed`)
                 VALUES '.$values.'
                ';
 
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute();
+        $pdo = null;
+        return true;
+    }
+
+    function reset(){
+        $pdo = $this->getPdo();
+        $sql = 'UPDATE `inorganic1` SET status = 0;';
         $stmt = $pdo->prepare($sql);
         $stmt->execute();
         $pdo = null;
@@ -142,8 +173,9 @@ class Scraper
 
     public function curlTo($url){
 
-        $port = '56362';
-        $proxy = array(
+        $port1 = '56362';
+        $port2 = '43848';
+        $proxy[] = array(
             '213.184.110.82',
             '213.184.112.53',
             '213.184.114.168',
@@ -157,7 +189,23 @@ class Scraper
             '196.16.246.157',
             '196.16.246.99'
         );
-        $ip = $proxy[mt_rand(0,count($proxy) - 1)];
+        $proxy[] = array(
+            '213.184.109.142',
+            '213.184.110.15',
+            '213.184.112.145',
+            '213.184.114.178',
+            '196.16.224.25',
+            '196.16.246.29'
+        );
+
+        $proxyIndex = rand(0, 1);
+        if($proxyIndex == 0){
+            $port = $port1;
+        }else{
+            $port = $port2;
+        }
+
+        $ip = $proxy[$proxyIndex][mt_rand(0,count($proxy) - 1)];
         $curl = curl_init();
 
         curl_setopt_array($curl, array(
@@ -168,10 +216,10 @@ class Scraper
             CURLOPT_TIMEOUT => 30,
             CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
             CURLOPT_CUSTOMREQUEST => "GET",
-         //   CURLOPT_PROXYTYPE => CURLPROXY_HTTP,
-        //    CURLOPT_PROXY => $ip,
-         //   CURLOPT_PROXYPORT => $port,
-        //    CURLOPT_PROXYUSERPWD => 'amznscp:dfab7c358',
+            CURLOPT_PROXYTYPE => CURLPROXY_HTTP,
+            CURLOPT_PROXY => $ip,
+            CURLOPT_PROXYPORT => $port,
+            CURLOPT_PROXYUSERPWD => 'amznscp:dfab7c358',
             CURLOPT_HTTPHEADER => array(
                 "Cache-Control: no-cache",
                 "Postman-Token: 85969a77-227f-4da2-ab22-81feaa26c0c4"

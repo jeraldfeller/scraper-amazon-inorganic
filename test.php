@@ -19,10 +19,11 @@ foreach($keywords as $row){
     while ($s < 7){
         $url = "https://www.amazon.$locale/s?field-keywords=$keyword&page=$pg";
         echo $url . "\n";
-        if($pg == 3) break;
+        if($pg == 7) break;
         $htmlData = $scraper->curlTo($url);
         if($htmlData['html']){
             $html = str_get_html($htmlData['html']);
+            echo $html;
             if($html){
 
                 // Banner Ads
@@ -129,7 +130,7 @@ function replaceSponsorText($title, $locale){
     switch($locale){
         case 'it':
             return str_replace('[Sponsorizzato]', '', $title);
-        break;
+            break;
     }
 }
 
@@ -139,7 +140,7 @@ function translateMonth($month, $locale){
             switch ($month){
                 case 'gennaio':
                     return 'january';
-                break;
+                    break;
                 case 'febbraio':
                     return 'february';
                     break;
@@ -174,6 +175,6 @@ function translateMonth($month, $locale){
                     return 'december';
                     break;
             }
-        break;
+            break;
     }
 }
